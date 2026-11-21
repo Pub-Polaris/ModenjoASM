@@ -8,14 +8,14 @@ namespace ModenjoASM
     /// It is intentionally small: the game's Lua mod entry can load this assembly
     /// and call <see cref="Init"/> without patching Assembly-CSharp.dll.
     /// </summary>
-    public static class Bootstrap
+    public sealed class Bootstrap
     {
         public const string ModId = "7nnkmj";
         public const string ArtifactId = "7nnkmj:scoring_artifact";
 
         private static bool _initialized;
 
-        public static void Init()
+        public void Init()
         {
             if (_initialized)
             {

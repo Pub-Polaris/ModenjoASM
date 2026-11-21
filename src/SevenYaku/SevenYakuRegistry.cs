@@ -68,6 +68,18 @@ namespace ModenjoASM.SevenYaku
             Add("pure_fully_terminal", 7, PureFullyTerminal, "123m789m111p999p11s");
             Add("mixed_fully_terminal", 5, MixedFullyTerminal, "123m789p111s555z11z");
             Add("mixed_terminals", 5, MixedTerminals, "111m999p111s555z11z");
+            Add("all_simple", 2, AllSimple, "234m345p456s678m22p");
+            Add("all_pungs", 3, AllPungs, "111m222p333s444z11z");
+            Add("half_flush", 5, HalfFlush, "123m456m789m111z22z");
+            Add("fully_flush", 14, FullyFlush, "123m456m789m111m22m");
+            Add("two_ankou", 3, TwoAnkou, "111m222p345s678s99m");
+            Add("three_ankou", 5, ThreeAnkou, "111m222p333s456m99m");
+            Add("two_kan", 3, TwoKan, "1111m2222p345s678s99m");
+            Add("three_kan", 5, ThreeKan, "1111m2222p3333s456m99m");
+            Add("same_color_double_old_young", 2, SameColorDoubleOldYoung, "123789m123789p11s");
+            Add("two_color_double_old_young", 3, TwoColorDoubleOldYoung, "123789m123789p11s");
+            Add("all_number_jin", 1, AllNumberJin, "123m456p789s234m55s");
+            Add("four_ankan", 70, FourAnkan, "1111m2222p3333s4444z11z");
             Add("seven_pairs", 7, SevenPairs, "11223344556677m");
 
             UnityEngine.Debug.Log($"[7nnkmj] registered {_entries.Count} custom yaku");
@@ -399,6 +411,71 @@ namespace ModenjoASM.SevenYaku
 
         private static bool MixedTerminals(Permutation perm, Player player) =>
             perm.ToTiles().All(t => IsHonor(t) || t.GetOrder() is 1 or 9);
+
+        private static bool AllSimple(Permutation perm, Player player) =>
+            perm.ToTiles().All(t => IsNumbered(t) && t.GetOrder() >= 2 && t.GetOrder() <= 8);
+
+        private static bool AllPungs(Permutation perm, Player player) =>
+            perm.blocks.Length > 0 && perm.blocks.All(b => b.IsAAA() || b.IsAAAA());
+
+        private static bool HalfFlush(Permutation perm, Player player)
+        {
+            var cats = perm.ToTiles().Select(t => t.GetCategory()).Distinct().ToList();
+            bool hasHonor = cats.Any(IsHonor);
+            int suits = cats.Count(c => !IsHonor(c));
+            return hasHonor && suits == 1;
+        }
+
+        private static bool FullyFlush(Permutation perm, Player player)
+        {
+            var cats = perm.ToTiles().Select(t => t.GetCategory()).Distinct().ToList();
+            return cats.Count == 1 && !IsHonor(cats[0]);
+        }
+
+        private static bool TwoAnkou(Permutation perm, Player player) => Kos(perm).Count >= 2;
+
+        private static bool ThreeAnkou(Permutation perm, Player player) => Kos(perm).Count >= 3;
+
+        private static bool TwoKan(Permutation perm, Player player) =>
+            perm.blocks.Count(b => b.IsAAAA()) >= 2;
+
+        private static bool ThreeKan(Permutation perm, Player player) =>
+            perm.blocks.Count(b => b.IsAAAA()) >= 3;
+
+        private static bool FourAnkan(Permutation perm, Player player) =>
+            perm.blocks.Count(b => b.IsAAAA()) >= 4;
+
+        private static bool SameColorDoubleOldYoung(Permutation perm, Player player)
+        {
+            foreach (var category in new[] { Tile.Category.Wan, Tile.Category.Suo, Tile.Category.Bing })
+            {
+                var runs = Runs(perm).Where(r => r.Category == category).ToList();
+                if (runs.Count(r => r.Order == 1) >= 2 && runs.Count(r => r.Order == 7) >= 2)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TwoColorDoubleOldYoung(Permutation perm, Player player)
+        {
+            int matched = 0;
+            foreach (var category in new[] { Tile.Category.Wan, Tile.Category.Suo, Tile.Category.Bing })
+            {
+                var runs = Runs(perm).Where(r => r.Category == category).ToList();
+                if (runs.Any(r => r.Order == 1) && runs.Any(r => r.Order == 7))
+                {
+                    matched++;
+                }
+            }
+
+            return matched >= 2;
+        }
+
+        private static bool AllNumberJin(Permutation perm, Player player) =>
+            AllNumber(perm, player) && perm.blocks.Length > 0 && perm.blocks.All(b => b.IsABC());
 
         // ---- helpers ----
 
