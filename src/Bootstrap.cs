@@ -25,6 +25,10 @@ namespace ModenjoASM
             _initialized = true;
             ModenjoASM.SevenYaku.SevenYakuRegistry.RegisterAll();
             SevenArtifactRegistration.Register();
+
+            var versionTag = new UnityEngine.GameObject("ModenjoASM.VersionTag");
+            versionTag.AddComponent<ModenjoAsmVersionTag>();
+
             UnityEngine.Debug.Log("[7nnkmj] ModenjoASM initialized");
         }
     }
