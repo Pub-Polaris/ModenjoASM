@@ -1,21 +1,31 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using UnityEngine;
 
 namespace ModenjoASM
 {
     /// <summary>
-    /// Runtime bootstrap for the 7nnkmj port.
-    /// It is intentionally small: the game's Lua mod entry can load this assembly
-    /// and call <see cref="Init"/> without patching Assembly-CSharp.dll.
+    /// Runtime host for non-invasive Aotenjo extensions.
+    ///
+    /// Lua loads this assembly from the mod folder, calls CreateInstance on
+    /// <see cref="Bootstrap"/>, then calls <see cref="Init"/>. The host creates
+    /// its UI marker and loads module DLLs from the mod's modules directory.
+    /// No game assembly is patched.
     /// </summary>
     public sealed class Bootstrap
     {
-        public const string ModId = "7nnkmj";
-        public const string ArtifactId = "7nnkmj:scoring_artifact";
+        public const string HostId = "ModenjoASM";
 
         private static bool _initialized;
+        private static string _modRoot = string.Empty;
 
         public void Init()
+        {
+            Init(null);
+        }
+
+        public void Init(string? modDirectory)
         {
             if (_initialized)
             {
@@ -23,66 +33,41 @@ namespace ModenjoASM
             }
 
             _initialized = true;
-            ModenjoASM.SevenYaku.SevenYakuRegistry.RegisterAll();
-            SevenArtifactRegistration.Register();
+            _modRoot = ResolveModRoot(modDirectory);
+            AppDomain.CurrentDomain.AssemblyResolve += ResolveModuleDependency;
 
-            var versionTag = new UnityEngine.GameObject("ModenjoASM.VersionTag");
-            versionTag.AddComponent<ModenjoAsmVersionTag>();
+            var tag = new GameObject("ModenjoASM.VersionTag");
+            tag.AddComponent<ModenjoAsmVersionTag>();
 
-            UnityEngine.Debug.Log("[7nnkmj] ModenjoASM initialized");
-        }
-    }
-
-    internal static class SevenArtifactRegistration
-    {
-        private static bool _registered;
-
-        public static void Register()
-        {
-            if (_registered)
-            {
-                return;
-            }
-
-            _registered = true;
-            Aotenjo.ArtifactRegistry.Register(
-                Bootstrap.ArtifactId,
-                () => new SevenScoringArtifact(),
-                Bootstrap.ModId);
-
-            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerRoundEvent.Start.Prepare>(
-                evt => EnsureArtifact(evt?.player), priority: -100);
-            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerRoundEvent.Start.Pre>(
-                evt => EnsureArtifact(evt?.player), priority: -100);
-            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerRoundEvent.Start.Post>(
-                evt => EnsureArtifact(evt?.player), priority: -100);
-            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerEvents.PreAddTileEvent>(
-                evt => EnsureArtifact(evt?.player), priority: -100);
-            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerEvents.PostAddTileEvent>(
-                evt => EnsureArtifact(evt?.player), priority: -100);
-            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerEvents.PostSettlePermutationEvent>(
-                evt => SevenScoringArtifact.ApplyScore(evt?.player, evt?.permutation), priority: 10_000);
+            ModenjoModuleLoader.Load(_modRoot);
+            Debug.Log($"[ModenjoASM] host initialized from {_modRoot}");
         }
 
-        private static void EnsureArtifact(Aotenjo.Player? player)
+        private static string ResolveModRoot(string? modDirectory)
         {
-            if (player == null)
+            if (!string.IsNullOrWhiteSpace(modDirectory) && Directory.Exists(modDirectory))
             {
-                return;
+                return Path.GetFullPath(modDirectory);
             }
 
-            UnityEngine.Debug.Log($"[7nnkmj] artifact check, held={player.GetArtifacts().Count}");
-            foreach (var artifact in player.GetArtifacts())
+            // Fallback: the host DLL lives directly in the mod folder.
+            string assemblyPath = typeof(Bootstrap).Assembly.Location;
+            string? assemblyDir = string.IsNullOrEmpty(assemblyPath)
+                ? null
+                : Path.GetDirectoryName(assemblyPath);
+            return assemblyDir ?? Environment.CurrentDirectory;
+        }
+
+        private static Assembly? ResolveModuleDependency(object sender, ResolveEventArgs args)
+        {
+            if (string.IsNullOrEmpty(_modRoot))
             {
-                if (artifact != null && artifact.GetRegName() == Bootstrap.ArtifactId)
-                {
-                    return;
-                }
+                return null;
             }
 
-            player.ObtainArtifact(new SevenScoringArtifact(), forced: true);
-            ModenjoASM.SevenYaku.SevenYakuRegistry.GrantAll(player);
-            UnityEngine.Debug.Log("[7nnkmj] scoring artifact granted");
+            string simpleName = new AssemblyName(args.Name).Name;
+            string candidate = Path.Combine(_modRoot, simpleName + ".dll");
+            return File.Exists(candidate) ? Assembly.LoadFrom(candidate) : null;
         }
     }
 }

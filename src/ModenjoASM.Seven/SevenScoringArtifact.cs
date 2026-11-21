@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using Aotenjo;
 
-namespace ModenjoASM
+namespace ModenjoASM.Seven
 {
+    using ModenjoASM.SevenYaku;
     /// <summary>
     /// Unremovable run artifact. It is granted by the round-start hook, occupies
     /// one inventory slot, and grants one additional slot so the host run is not
@@ -16,7 +17,7 @@ namespace ModenjoASM
         private bool _slotGranted;
 
         public SevenScoringArtifact()
-            : base(Bootstrap.ArtifactId, Rarity.COMMON)
+            : base(SevenModule.ArtifactId, Rarity.COMMON)
         {
         }
 

@@ -10,7 +10,10 @@
     <GameManagedDir>E:\SteamLibrary\steamapps\common\Aotenjo\Aotenjo_Data\Managed</GameManagedDir>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="src\**\*.cs" />
+    <Compile Include="src\Bootstrap.cs" />
+    <Compile Include="src\IModenjoModule.cs" />
+    <Compile Include="src\ModenjoModuleLoader.cs" />
+    <Compile Include="src\ModenjoAsmVersionTag.cs" />
     <Reference Include="Assembly-CSharp">
       <HintPath>$(GameManagedDir)\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>

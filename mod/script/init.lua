@@ -1,10 +1,11 @@
--- ModenjoASM bootstrap for the 7nnkmj port.
--- Keep this file tiny: the actual rules live in the C# assembly.
+-- ModenjoASM bootstrap for the Aotenjo extension host.
+-- Keep this file tiny: the loader lives in the C# assembly and module DLLs.
 local function load_assemblies()
     local base = CS.UnityEngine.Application.streamingAssetsPath
-    local dll = CS.System.IO.Path.Combine(base, "mods/7nnkmj_0.001/ModenjoASM.dll")
+    local modDir = CS.System.IO.Path.Combine(base, "mods/7nnkmj_0.001")
+    local dll = CS.System.IO.Path.Combine(modDir, "ModenjoASM.dll")
     local asm = CS.System.Reflection.Assembly.LoadFile(dll)
-    CS.Aotenjo.Logger.Log("[7nnkmj] assembly: " .. tostring(asm and asm.FullName))
+    CS.Aotenjo.Logger.Log("[ModenjoASM] host assembly: " .. tostring(asm and asm.FullName))
 
     -- xLua's CS namespace cache may not see a type from an assembly loaded after
     -- startup. Resolve it explicitly through System.Type.
@@ -18,14 +19,14 @@ local function load_assemblies()
         error("Bootstrap instance not found")
     end
 
-    runner:Init()
+    runner:Init(modDir)
 end
 
 function init()
     local ok, err = pcall(load_assemblies)
     if not ok then
-        CS.Aotenjo.Logger.LogError("[7nnkmj] ModenjoASM load failed: " .. tostring(err))
+        CS.Aotenjo.Logger.LogError("[ModenjoASM] load failed: " .. tostring(err))
     else
-        CS.Aotenjo.Logger.Log("[7nnkmj] ModenjoASM loaded")
+        CS.Aotenjo.Logger.Log("[ModenjoASM] host loaded")
     end
 end
