@@ -66,8 +66,14 @@ namespace ModenjoASM
             }
 
             string simpleName = new AssemblyName(args.Name).Name;
-            string candidate = Path.Combine(_modRoot, simpleName + ".dll");
-            return File.Exists(candidate) ? Assembly.LoadFrom(candidate) : null;
+            string rootCandidate = Path.Combine(_modRoot, simpleName + ".dll");
+            if (File.Exists(rootCandidate))
+            {
+                return Assembly.LoadFrom(rootCandidate);
+            }
+
+            string moduleCandidate = Path.Combine(_modRoot, "modules", simpleName + ".dll");
+            return File.Exists(moduleCandidate) ? Assembly.LoadFrom(moduleCandidate) : null;
         }
     }
 }

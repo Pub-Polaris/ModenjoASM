@@ -1,6 +1,6 @@
 {
   "modID": "7nnkmj",
-  "name": "七子麻将 / 7nnkmj",
+  "name": "ModenjoASM 示例：七子麻将",
   "version": "0.1.0",
   "artifactApiVersion": 2,
   "supportedGameVersions": [
@@ -10,5 +10,5 @@
     }
   ],
   "author": "公民北极星_Official",
-  "description": "将七子麻将的役种与赋位计分迁移到青天井。"
+  "description": "ModenjoASM 扩展宿主示例：把七子麻将的役种与赋位计分作为单人 Roguelike 模块加载。"
 }
