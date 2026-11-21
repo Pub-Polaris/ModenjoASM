@@ -31,5 +31,19 @@
   "yaku_custom_yaku:7nnkmj:nine_gates_name": "Nine Gates",
   "yaku_custom_yaku:7nnkmj:pure_fully_terminal_name": "Pure Outside Hand",
   "yaku_custom_yaku:7nnkmj:mixed_fully_terminal_name": "Mixed Outside Hand",
-  "yaku_custom_yaku:7nnkmj:mixed_terminals_name": "Mixed Terminals"
+  "yaku_custom_yaku:7nnkmj:mixed_terminals_name": "Mixed Terminals",
+
+  "yaku_custom_yaku:7nnkmj:seven_pairs_name": "Seven Pairs",
+  "yaku_custom_yaku:7nnkmj:all_simple_name": "All Simples",
+  "yaku_custom_yaku:7nnkmj:all_pungs_name": "All Pungs",
+  "yaku_custom_yaku:7nnkmj:half_flush_name": "Half Flush",
+  "yaku_custom_yaku:7nnkmj:fully_flush_name": "Full Flush",
+  "yaku_custom_yaku:7nnkmj:two_ankou_name": "Two Concealed Triplets",
+  "yaku_custom_yaku:7nnkmj:three_ankou_name": "Three Concealed Triplets",
+  "yaku_custom_yaku:7nnkmj:two_kan_name": "Two Kongs",
+  "yaku_custom_yaku:7nnkmj:three_kan_name": "Three Kongs",
+  "yaku_custom_yaku:7nnkmj:same_color_double_old_young_name": "Same-Suit Double Old/Young",
+  "yaku_custom_yaku:7nnkmj:two_color_double_old_young_name": "Two-Color Double Old/Young",
+  "yaku_custom_yaku:7nnkmj:all_number_jin_name": "All Number Sequences",
+  "yaku_custom_yaku:7nnkmj:four_ankan_name": "Four Concealed Kongs"
 }

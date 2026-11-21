@@ -67,8 +67,10 @@ powershell -ExecutionPolicy Bypass -File tools/install.ps1
 ## 当前状态
 
 - C# 工程可编译：`netstandard2.1`
-- 已注册首批静态役
+- 已在 Aotenjo `0.7.1.2-EA` 实机加载：43 个 custom yaku 注册成功
 - 遗物：不可出售，开局授予，额外 1 格
 - 计分算法仍在补齐，未声称已完成全表迁移
+- 已加入首批静态役、赋位表、本地中英文案
+- 状态役、四暗刻/明杠暗杠区分、完整高役特例仍需继续
 
 By DSH
