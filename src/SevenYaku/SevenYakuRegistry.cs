@@ -78,8 +78,8 @@ namespace ModenjoASM.SevenYaku
             AddHigh("three_seven_flower", 70, ThreeSevenFlower, "777m777p777s111z55z", doubleYakuman: true);
             AddHigh("beauty_seven_pairs", 70, BeautySevenPairs, "111z222z555z666z777z11p", doubleYakuman: true);
             AddHigh("big_three_dragons", 28, BigThreeDragons, "555z666z777z111m22m");
-            AddHigh("four_ankou", 28, FourAnkou, "111m222p333s444z11z");
             AddHigh("four_kings", 28, FourKings, "111z222z333z444z11m", pointsBonus: 7000);
+            AddHigh("four_ankou", 28, FourAnkou, "111m222p333s444z11z");
             AddHigh("four_ankan", 70, FourAnkan, "1111m2222p3333s4444z11z", doubleYakuman: true);
             AddHigh("four_kan", 28, FourKan, "1111m2222p3333s4444z11z");
             AddHigh("all_honors", 28, AllHonors, "111z222z333z444z55z");
