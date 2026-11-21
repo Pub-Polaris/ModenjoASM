@@ -17,16 +17,33 @@ namespace ModenjoASM.SevenYaku
 
         private sealed class YakuEntry
         {
-            public YakuEntry(YakuType type, int fu, Func<Permutation, Player, bool> predicate)
+            public YakuEntry(YakuType type, int fu, Func<Permutation, Player, bool> predicate,
+                bool isHigh = false, int? fixedPoints = null, bool doubleYakuman = false, int pointsBonus = 0)
             {
                 Type = type;
                 Fu = fu;
                 Predicate = predicate;
+                IsHigh = isHigh;
+                FixedPoints = fixedPoints;
+                DoubleYakuman = doubleYakuman;
+                PointsBonus = pointsBonus;
             }
 
             public YakuType Type { get; }
             public int Fu { get; }
             public Func<Permutation, Player, bool> Predicate { get; }
+            public bool IsHigh { get; }
+            public int? FixedPoints { get; }
+            public bool DoubleYakuman { get; }
+            public int PointsBonus { get; }
+        }
+
+        public sealed class ScoreResult
+        {
+            public int Points { get; set; }
+            public int Fu { get; set; }
+            public bool IsHigh { get; set; }
+            public bool DoubleYakuman { get; set; }
         }
 
         public static void RegisterAll()
@@ -38,7 +55,7 @@ namespace ModenjoASM.SevenYaku
 
             _registered = true;
 
-            Add("four_pairs_seven", 7, FourPairsSeven, "11223344556677m");
+            Add("four_pairs_seven", 7, FourPairsSeven, "11223344556677m", fixedPoints: 7000);
             Add("missing_seven", 1, MissingSeven, "11223344556688m");
             Add("all_number", 1, AllNumber, "123456789m123p45s");
             Add("all_chi", 1, AllChi, "123m456m789p123s11z");
@@ -57,17 +74,28 @@ namespace ModenjoASM.SevenYaku
             Add("same_high", 4, SameHigh, "123m123p456s789s11z");
             Add("double_same_high", 7, DoubleSameHigh, "123m123p123s789m11z");
             Add("small_three_dragons", 8, SmallThreeDragons, "555z666z777z11m22m");
-            Add("big_three_dragons", 28, BigThreeDragons, "555z666z777z111m22m");
-            Add("four_kings", 28, FourKings, "111z222z333z444z11m");
-            Add("four_kan", 28, FourKan, "1111m2222p3333s4444z11z");
-            Add("all_honors", 28, AllHonors, "111z222z333z444z55z");
-            Add("all_terminals", 28, AllTerminals, "111m999m111p999p11s");
-            Add("all_green", 28, AllGreen, "222s333s444s666s88s");
-            Add("thirteen_orphans", 28, ThirteenOrphans, "19m19p19s1234567z1m");
-            Add("nine_gates", 28, NineGates, "1112345678999m11m");
+            AddHigh("pure_moon_in_water", 70, PureMoonInWater, "11223344556677p", doubleYakuman: true);
+            AddHigh("three_seven_flower", 70, ThreeSevenFlower, "777m777p777s111z55z", doubleYakuman: true);
+            AddHigh("beauty_seven_pairs", 70, BeautySevenPairs, "111z222z555z666z777z11p", doubleYakuman: true);
+            AddHigh("big_three_dragons", 28, BigThreeDragons, "555z666z777z111m22m");
+            AddHigh("four_kings", 28, FourKings, "111z222z333z444z11m", pointsBonus: 7000);
+            AddHigh("four_ankan", 70, FourAnkan, "1111m2222p3333s4444z11z", doubleYakuman: true);
+            AddHigh("four_kan", 28, FourKan, "1111m2222p3333s4444z11z");
+            AddHigh("all_honors", 28, AllHonors, "111z222z333z444z55z");
+            AddHigh("all_terminals", 28, AllTerminals, "111m999m111p999p11s");
+            AddHigh("all_green", 28, AllGreen, "222s333s444s666s88s");
+            AddHigh("thirteen_orphans", 28, ThirteenOrphans, "19m19p19s1234567z1m");
+            AddHigh("nine_gates", 28, NineGates, "1112345678999m11m");
             Add("pure_fully_terminal", 7, PureFullyTerminal, "123m789m111p999p11s");
             Add("mixed_fully_terminal", 5, MixedFullyTerminal, "123m789p111s555z11z");
             Add("mixed_terminals", 5, MixedTerminals, "111m999p111s555z11z");
+            Add("three_kingdoms", 14, ThreeKingdoms, "222m555p888s111z22z", fixedPoints: 7000);
+            Add("less_than_seven", 14, LessThanSeven, "123m55p55s111z222z");
+            Add("greater_than_seven", 14, GreaterThanSeven, "789m55p55s111z222z");
+            Add("north_south_pass", 14, NorthSouthPass, "123456789m22z44z11p");
+            Add("flower_in_mirror", 14, FlowerInMirror, "11223344556677p");
+            Add("moon_in_water", 14, MoonInWater, "11223344556677p");
+            Add("chidaichi", 14, Chidaichi, "123456789m11p33p55p");
             Add("all_simple", 2, AllSimple, "234m345p456s678m22p");
             Add("all_pungs", 3, AllPungs, "111m222p333s444z11z");
             Add("half_flush", 5, HalfFlush, "123m456m789m111z22z");
@@ -79,7 +107,6 @@ namespace ModenjoASM.SevenYaku
             Add("same_color_double_old_young", 2, SameColorDoubleOldYoung, "123789m123789p11s");
             Add("two_color_double_old_young", 3, TwoColorDoubleOldYoung, "123789m123789p11s");
             Add("all_number_jin", 1, AllNumberJin, "123m456p789s234m55s");
-            Add("four_ankan", 70, FourAnkan, "1111m2222p3333s4444z11z");
             Add("seven_pairs", 7, SevenPairs, "11223344556677m");
 
             UnityEngine.Debug.Log($"[7nnkmj] registered {_entries.Count} custom yaku");
@@ -106,30 +133,66 @@ namespace ModenjoASM.SevenYaku
         /// Original 7nnkmj fu for the current permutation. The artifact uses this
         /// to replace Aotenjo's Fan x Fu result with the 7nnkmj point table.
         /// </summary>
-        public static int ScoreFu(Permutation perm, Player player)
+        public static ScoreResult Evaluate(Permutation perm, Player player)
         {
+            var result = new ScoreResult();
             if (perm == null || player == null)
             {
-                return 0;
+                return result;
+            }
+
+            // High yaku replace the normal table entirely (first match wins).
+            foreach (var entry in _entries)
+            {
+                if (!entry.IsHigh || !Matches(entry, perm, player))
+                {
+                    continue;
+                }
+
+                result.IsHigh = true;
+                result.DoubleYakuman = entry.DoubleYakuman;
+                result.Fu = entry.Fu;
+                result.Points = entry.DoubleYakuman ? 70000 : entry.Fu >= 28 ? 35000 : CalcPoints(entry.Fu);
+                result.Points += entry.PointsBonus;
+                return result;
             }
 
             int fu = 0;
+            int bonus = 0;
+            int? fixedPoints = null;
             foreach (var entry in _entries)
             {
-                try
+                if (entry.IsHigh || !Matches(entry, perm, player))
                 {
-                    if (entry.Predicate(perm, player))
-                    {
-                        fu += entry.Fu;
-                    }
+                    continue;
                 }
-                catch
+
+                fu += entry.Fu;
+                bonus += entry.PointsBonus;
+                if (entry.FixedPoints.HasValue && !fixedPoints.HasValue)
                 {
-                    // A single custom predicate must not break settlement.
+                    fixedPoints = entry.FixedPoints;
                 }
             }
 
-            return fu;
+            result.Fu = Math.Max(7, fu);
+            result.Points = fixedPoints ?? CalcPoints(result.Fu);
+            result.Points += bonus;
+            return result;
+        }
+
+        public static int ScoreFu(Permutation perm, Player player) => Evaluate(perm, player).Fu;
+
+        private static bool Matches(YakuEntry entry, Permutation perm, Player player)
+        {
+            try
+            {
+                return entry.Predicate(perm, player);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -160,7 +223,20 @@ namespace ModenjoASM.SevenYaku
             return baseline + (fu - threshold) * 700;
         }
 
-        private static void Add(string id, int fu, Func<Permutation, Player, bool> predicate, string example)
+        private static void Add(string id, int fu, Func<Permutation, Player, bool> predicate,
+            string example, int? fixedPoints = null)
+        {
+            AddInternal(id, fu, predicate, example, isHigh: false, fixedPoints, doubleYakuman: false, pointsBonus: 0);
+        }
+
+        private static void AddHigh(string id, int fu, Func<Permutation, Player, bool> predicate,
+            string example, bool doubleYakuman = false, int pointsBonus = 0)
+        {
+            AddInternal(id, fu, predicate, example, isHigh: true, fixedPoints: null, doubleYakuman, pointsBonus);
+        }
+
+        private static void AddInternal(string id, int fu, Func<Permutation, Player, bool> predicate,
+            string example, bool isHigh, int? fixedPoints, bool doubleYakuman, int pointsBonus)
         {
             var yaku = CustomYakuBuilder.RegisterCustomYaku(
                 Prefix + id,
@@ -173,7 +249,7 @@ namespace ModenjoASM.SevenYaku
                 new[] { 0, 2, 6 },
                 Rarity.COMMON,
                 example);
-            _entries.Add(new YakuEntry(yaku, fu, predicate));
+            _entries.Add(new YakuEntry(yaku, fu, predicate, isHigh, fixedPoints, doubleYakuman, pointsBonus));
         }
 
         private static bool SevenPairs(Permutation perm, Player player) =>
@@ -476,6 +552,127 @@ namespace ModenjoASM.SevenYaku
 
         private static bool AllNumberJin(Permutation perm, Player player) =>
             AllNumber(perm, player) && perm.blocks.Length > 0 && perm.blocks.All(b => b.IsABC());
+
+        private static bool PureMoonInWater(Permutation perm, Player player) =>
+            perm.GetPermType() == PermutationType.SEVEN_PAIRS && CountByTile(perm)[9] == 2;
+
+        private static bool ThreeSevenFlower(Permutation perm, Player player)
+        {
+            var counts = CountByTile(perm);
+            if (counts[6] < 3 || counts[15] < 3 || counts[24] < 3)
+            {
+                return false;
+            }
+
+            int rest = perm.ToTiles().Count(t =>
+                IsHonor(t) || t.GetOrder() == 1 || t.GetOrder() == 5 || t.GetOrder() == 9);
+            return rest == 5 && !perm.ToTiles().Any(t => !IsHonor(t) && t.GetOrder() == 7);
+        }
+
+        private static bool BeautySevenPairs(Permutation perm, Player player)
+        {
+            if (perm.GetPermType() != PermutationType.SEVEN_PAIRS)
+            {
+                return false;
+            }
+
+            var counts = CountByTile(perm);
+            return counts[31] == 4 && counts[32] == 4 && counts[33] == 4 && counts[9] == 2;
+        }
+
+        private static bool ThreeKingdoms(Permutation perm, Player player)
+        {
+            var kos = Kos(perm);
+            if (kos.Count != 3)
+            {
+                return false;
+            }
+
+            var cats = kos.Select(k => k.Category).Distinct().ToList();
+            var orders = kos.Select(k => k.Order).ToList();
+            return cats.Count == 3
+                && cats.All(c => c is Tile.Category.Wan or Tile.Category.Suo or Tile.Category.Bing)
+                && orders.Contains(2) && orders.Contains(5) && orders.Contains(8);
+        }
+
+        private static bool LessThanSeven(Permutation perm, Player player) =>
+            XyShape(perm, 1);
+
+        private static bool GreaterThanSeven(Permutation perm, Player player) =>
+            XyShape(perm, 7);
+
+        private static bool XyShape(Permutation perm, int start)
+        {
+            var tiles = perm.ToTiles();
+            if (tiles.Count != 14)
+            {
+                return false;
+            }
+
+            int honors = tiles.Count(IsHonor);
+            if (honors != 8 || tiles.Count - honors != 6)
+            {
+                return false;
+            }
+
+            var honorCounts = new int[8];
+            foreach (var t in tiles.Where(IsHonor))
+            {
+                honorCounts[t.GetOrder() - 1]++;
+            }
+
+            if (honorCounts.Count(c => c > 0) != 4 || honorCounts.Any(c => c is not (0 or 2)))
+            {
+                return false;
+            }
+
+            return perm.blocks.Any(b => b.IsABC() && b.tiles[0].GetOrder() == start);
+        }
+
+        private static bool NorthSouthPass(Permutation perm, Player player)
+        {
+            var counts = CountByTile(perm);
+            bool hasDragon = false;
+            for (int suit = 0; suit < 3; suit++)
+            {
+                bool all = true;
+                for (int n = 0; n < 9; n++)
+                {
+                    if (counts[suit * 9 + n] < 1)
+                    {
+                        all = false;
+                        break;
+                    }
+                }
+
+                hasDragon |= all;
+            }
+
+            if (!hasDragon)
+            {
+                return false;
+            }
+
+            int south = counts[28];
+            int north = counts[30];
+            return (south >= 2 && north >= 2) || (south >= 3 && north >= 1) || (north >= 3 && south >= 1);
+        }
+
+        private static bool FlowerInMirror(Permutation perm, Player player) =>
+            perm.GetPermType() == PermutationType.SEVEN_PAIRS && CountByTile(perm)[13] == 2;
+
+        private static bool MoonInWater(Permutation perm, Player player) =>
+            perm.GetPermType() == PermutationType.SEVEN_PAIRS && CountByTile(perm)[9] == 2;
+
+        private static bool Chidaichi(Permutation perm, Player player)
+        {
+            if (player == null || perm.ToTiles().Count != 14)
+            {
+                return false;
+            }
+
+            return perm.ToTiles().All(t => t.ContainsRed(player));
+        }
 
         // ---- helpers ----
 

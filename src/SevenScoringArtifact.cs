@@ -70,8 +70,8 @@ namespace ModenjoASM
                 return;
             }
 
-            int fu = Math.Max(7, ModenjoASM.SevenYaku.SevenYakuRegistry.ScoreFu(evt.permutation, evt.player));
-            int points = ModenjoASM.SevenYaku.SevenYakuRegistry.CalcPoints(fu);
+            var score = ModenjoASM.SevenYaku.SevenYakuRegistry.Evaluate(evt.permutation, evt.player);
+            int points = score.Points;
             var player = evt.player;
 
             // Aotenjo already added RoundAccumulatedScore to CurrentAccumulatedScore;
