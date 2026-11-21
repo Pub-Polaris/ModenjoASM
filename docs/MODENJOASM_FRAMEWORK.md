@@ -13,7 +13,7 @@ ModenjoASM 是 Aotenjo 的**不修改原游戏的 C# 扩展宿主**，由三部�
 | 加载器 | `ModenjoASM.ModenjoModuleLoader`，发现并初始化模块 DLL |
 | 宿主入口 | `ModenjoASM.Bootstrap`，由 Lua 加载后调用 `Init` |
 
-**七子（7nnkmj / `ModenjoASM.Seven`）只是第一个示例模块，不是框架目标。** 宿主不引用任何模块程序集；删掉 `modules/ModenjoASM.Seven.dll` 后宿主照常启动，只留下“没有模块”的警告。仓库里的 56 役、赋位计分、七子遗物全部属于示例模块目录 `src/ModenjoASM.Seven/`，不属于宿主。
+**七子（7nnkmj / `ModenjoASM.Seven`）只是第一个示例模块，不是框架目标。** 宿主不引用任何模块程序集；删掉 `modules/ModenjoASM.Seven.dll` 后宿主照常启动，只留下“没有模块”的警告。仓库里的 56 役、番符计分全部属于示例模块目录 `src/ModenjoASM.Seven/`，不属于宿主。
 
 因此读本项目的顺序应是：先看宿主如何提供“可被加载的扩展位”，再看七子如何作为第一个消费者使用它。
 
@@ -29,7 +29,7 @@ ModenjoASM 是 Aotenjo 的**不修改原游戏的 C# 扩展宿主**，由三部�
 
 - 仓库不含 `.prefab`、`.unity`、AssetBundle 或 `StreamingAssets` 资源改动。
 - 界面上唯一的“改动”是运行时行为：`ModenjoAsmVersionTag` 每秒扫描一次 `TextMeshProUGUI`，把 `Modded!! By-ModenjoASM` 追加到短版本号文本后。它只改内存中的 UI 文本，不碰 prefab/场景文件。
-- 遗物、役种、文案都通过 C# 注册与 `mod/lang/*.json` 提供，不注入资源包。
+- 役种、文案都通过 C# 注册与 `mod/lang/*.json` 提供，不注入资源包。
 
 ### 2.3 唯一入口：Lua → 宿主 → 模块
 
@@ -53,21 +53,19 @@ Lua 侧只做三件事：定位宿主 DLL、用反射加载并实例化 `Bootstr
 
 | 事件 | 用途 |
 | --- | --- |
-| `PlayerRoundEvent.Start.Prepare` / `.Pre` / `.Post` | 保证遗物在回合开始时已授予 |
-| `PlayerEvents.PreAddTileEvent` / `PostAddTileEvent` | 中途补授遗物（读档、换人等情况） |
-| `PlayerEvents.PostSettlePermutationEvent` | 和牌结算后接管计分 |
+| `PlayerRoundEvent.Start.Prepare` / `.Pre` / `.Post` | 在回合开始时把示例役种置为可用 |
+| `PlayerEvents.PreAddTileEvent` / `PostAddTileEvent` | 读档、换人后补授役种等级 |
+| `PlayerEvents.PostSettlePermutationEvent` | 和牌结算后把七子 Fu/Fan 并入 Aotenjo 计分 |
 
-遗物补授回调使用 `priority: -100`，计分替换回调使用 `priority: 10_000`；优先级数值的排序方向以 Aotenjo `EventBus` 实现为准，本项目只按“补授靠前、结算靠后”的约定使用。
+役种授予回调使用 `priority: -100`，计分合并回调使用 `priority: 10_000`；优先级数值的排序方向以 Aotenjo `EventBus` 实现为准，本项目只按“授予靠前、结算靠后”的约定使用。
 
 ### 3.2 公开 API
 
 当前用到的游戏公开面（全部是 `Aotenjo` 命名空间下的公开类型/成员）：
 
-- `Aotenjo.ArtifactRegistry.Register(id, factory, modId)`：注册遗物。
 - `Aotenjo.CustomYakuBuilder.RegisterCustomYaku(...)`：注册自定义役。
-- `Player.ObtainArtifact`、`Player.GetArtifacts`、`Player.ChangeArtifactLimit`：遗物授予与槽位。
 - `Player.GetSkillSet().SetLevel/GetLevel`：授予役种等级（示例模块用它把 56 役全部置为 1 级）。
-- `Player.RoundAccumulatedScore`、`Player.CurrentAccumulatedScore`：替换本局得分。
+- `Player.RoundAccumulatedScore`、`Player.CurrentAccumulatedScore`：在结算回调里合并 Fu/Fan。
 - `Aotenjo.Utils.GetConfigValue("version")`：读版本号（版本标记用）。
 - `Aotenjo.Logger` / `UnityEngine.Debug`：日志。
 
@@ -133,9 +131,11 @@ public interface IModenjoModule
 - 入口：`src/ModenjoASM.Seven/SevenModule.cs`，`Id = "7nnkmj"`。
 - `Initialize()` 做两件事：
   1. `SevenYakuRegistry.RegisterAll()`：用 `CustomYakuBuilder.RegisterCustomYaku` 注册 **56 个**自定义役（前缀 `7nnkmj:`，标签 `standard`/`galaxy`，稀有度 `COMMON`）。
-  2. `SevenArtifactRegistration.Register()`：注册遗物 `7nnkmj:scoring_artifact` 并接线事件。
-- 遗物：`SevenScoringArtifact`，不可出售（`CanBeSellByPlayer` / `CanBeSold` 均返回 false），占用 1 格并额外提供 1 格（`ChangeArtifactLimit(1)`）。
-- 计分：在 `PostSettlePermutationEvent` 里用 `SevenYakuRegistry.Evaluate(permutation, player)` 算出七子赋位点数，替换 `Player.RoundAccumulatedScore` / `CurrentAccumulatedScore` 中游戏原本的贡献。
+  2. `SevenScoringHook.Register()`：在 `PostSettlePermutationEvent` 里把七子 Fu/Fan 并入 Aotenjo 的正常计分。
+- 计分公式（不注册遗物）：
+  - `井符 = 七子符 + 原井符`
+  - `井番 = 七子符 / 7 + 原井番`（原始规则每 7n 赋 = n 番）
+  - `七子符` 由 `SevenYakuRegistry.Evaluate(permutation, player)` 返回。
 - 文案：`mod/lang/zh-CN.json`、`mod/lang/en-US.json`。
 
 ### 4.4 宿主 / 模块依赖方向
@@ -146,9 +146,9 @@ public interface IModenjoModule
 
 ## 5. 范围限制
 
-- **只针对单人 Roguelike 流程**：扩展的目标是 Aotenjo 现有的单人一局制、遗物/赋位/事件流。
+- **只针对单人 Roguelike 流程**：扩展的目标是 Aotenjo 现有的单人一局制、役种/番符/事件流。
 - **明确不做**：四人对局、四人结算、AI 对决。框架里没有联网、座位轮转、多人结算的代码，本项目也不计划做。
-- Aotenjo 不是传统麻将：它的手牌以 `Permutation`（和牌排列）为单位、计分以“赋位”表为基准，而不是传统麻将的番符体系。七子模块是把役种表和赋位表映射到这套机制上，不能假设它等同于传统麻将规则。
+- Aotenjo 不是传统麻将：它的手牌以 `Permutation`（和牌排列）为单位、计分以 `Fan × Fu` 为基准。七子模块是把 7nnkmj 的符/番并入这套机制，不能假设它等同于传统麻将规则。
 
 ## 6. 构建、安装与运行
 
@@ -203,8 +203,7 @@ powershell -ExecutionPolicy Bypass -File tools\install.ps1
 
 - 宿主与模块都直接引用 `Assembly-CSharp` 和 `UnityEngine` 程序集，游戏版本变化可能导致类型/成员缺失。
 - `mod/modinfo.json` 声明的兼容范围是 `supportedGameVersions: 0.7.1.1–0.8.0.0`。超出该范围不保证加载，可能直接抛 `TypeLoadException` / `MissingMethodException`。
-- `modinfo.json` 里有 `artifactApiVersion: 2` 字段（遗物 API 版本标记）；具体校验行为以游戏 ModManager 为准，改动前需确认对应游戏版本的 API。
-- 计分替换依赖 `PostSettlePermutationEvent` 的触发时机和 `RoundAccumulatedScore` 的语义；换游戏版本后这两点必须重新验证。
+- 计分合并依赖 `PostSettlePermutationEvent` 的触发时机和 `RoundAccumulatedScore` 的语义；换游戏版本后这两点必须重新验证。
 
 ### 7.3 崩溃与隔离
 
@@ -219,14 +218,14 @@ powershell -ExecutionPolicy Bypass -File tools\install.ps1
 在 Aotenjo `0.7.1.2-EA` 上确认过：
 
 - 拆分前版本已实机加载，日志出现 56 个自定义役注册成功（`[7nnkmj] registered 56 custom yaku`）。
-- 遗物：不可出售、开局授予、额外提供 1 格遗物槽。
 - 版本标记 `Modded!! By-ModenjoASM` 能显示在版本号旁。
 - 拆分后（commit `ecf73b4`）宿主工程与示例模块工程可构建，产出两个 DLL；安装脚本已按“宿主在 mod 根、模块在 `modules/`”的方式复制。
 - 拆分后的“宿主 + modules 目录”加载路径已实机验证，日志出现 `[ModenjoASM] module loaded: 7nnkmj` 与 `[7nnkmj] registered 56 custom yaku`。
+- 新的无遗物计分钩子已改为 `PostSettlePermutationEvent` 中合并 Fu/Fan；构建通过，但尚未用可和牌验证实际数值。
 
 ### 8.2 尚未验证 / 未完成
 
-- **可和牌的实际计分尚未验证**：`SevenYakuRegistry.Evaluate` 算出的赋位点数是否与游戏结算面板/预期一致，还没有实机对局确认。README 也写明“计分算法仍在补齐”。
+- **可和牌的实际计分尚未验证**：`SevenYakuRegistry.Evaluate` 算出的七子 Fu、`Fu/7` 的番数，以及“七子符 + 原井符 / 七子番 + 原井番”的合并结果是否与游戏面板一致，还没有实机对局确认。
 - 状态役（海底、岭上、人和、河底、和绝张）未实现；暗刻/明刻区分未实现；完整高役特例仍需继续补。
 - 不能把“注册了 56 个役”等同于“役种判定和计分正确”；当前状态是“能加载、能注册、能授予”，不是“规则已验证”。
 

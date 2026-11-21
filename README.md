@@ -19,7 +19,7 @@ ModenjoASM/
 │  ├─ IModenjoModule.cs            模块接口
 │  ├─ ModenjoModuleLoader.cs       模块发现/加载
 │  ├─ ModenjoAsmVersionTag.cs      版本标记
-│  └─ ModenjoASM.Seven/            示例模块（56 役 + 遗物）
+│  └─ ModenjoASM.Seven/            示例模块（56 役 + 番符计分）
 ├─ mod/
 │  ├─ modinfo.json                 示例模块的 mod 清单
 │  ├─ script/init.lua              Lua 入口
@@ -55,7 +55,11 @@ powershell -ExecutionPolicy Bypass -File tools\install.ps1
 ## 当前状态
 
 - 宿主 + 示例模块已拆分，Aotenjo `0.7.1.2-EA` 实机加载成功
-- 示例模块注册 56 个 custom yaku，并授予不可出售的计分遗物
+- 示例模块注册 56 个 custom yaku
+- 七子赋位通过普通 `Fu`/`Fan` 管线合并：
+  - `井符 = 七子符 + 原井符`
+  - `井番 = 七子符/7 + 原井番`
+- 不注册遗物
 - 版本号显示 `Modded!! By-ModenjoASM`
 - 可和牌的实际计分尚未验证
 - 状态役、暗刻/明刻区分不做

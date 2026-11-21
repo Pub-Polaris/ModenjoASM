@@ -1,8 +1,7 @@
 {
   "modID": "7nnkmj",
   "name": "ModenjoASM 示例：七子麻将",
-  "version": "0.1.0",
-  "artifactApiVersion": 2,
+  "version": "0.2.0",
   "supportedGameVersions": [
     {
       "minInclusive": "0.7.1.1",
