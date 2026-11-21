@@ -78,6 +78,7 @@ namespace ModenjoASM.SevenYaku
             AddHigh("three_seven_flower", 70, ThreeSevenFlower, "777m777p777s111z55z", doubleYakuman: true);
             AddHigh("beauty_seven_pairs", 70, BeautySevenPairs, "111z222z555z666z777z11p", doubleYakuman: true);
             AddHigh("big_three_dragons", 28, BigThreeDragons, "555z666z777z111m22m");
+            AddHigh("four_ankou", 28, FourAnkou, "111m222p333s444z11z");
             AddHigh("four_kings", 28, FourKings, "111z222z333z444z11m", pointsBonus: 7000);
             AddHigh("four_ankan", 70, FourAnkan, "1111m2222p3333s4444z11z", doubleYakuman: true);
             AddHigh("four_kan", 28, FourKan, "1111m2222p3333s4444z11z");
@@ -106,6 +107,8 @@ namespace ModenjoASM.SevenYaku
             Add("three_kan", 5, ThreeKan, "1111m2222p3333s456m99m");
             Add("same_color_double_old_young", 2, SameColorDoubleOldYoung, "123789m123789p11s");
             Add("two_color_double_old_young", 3, TwoColorDoubleOldYoung, "123789m123789p11s");
+            Add("double_even_ko", 2, DoubleEvenKo, "222m444p555z11z234s");
+            Add("triple_even_ko", 4, TripleEvenKo, "222m444p666s555z11z");
             Add("all_number_jin", 1, AllNumberJin, "123m456p789s234m55s");
             Add("seven_pairs", 7, SevenPairs, "11223344556677m");
 
@@ -672,6 +675,51 @@ namespace ModenjoASM.SevenYaku
             }
 
             return perm.ToTiles().All(t => t.ContainsRed(player));
+        }
+
+        private static bool FourAnkou(Permutation perm, Player player) => Kos(perm).Count >= 4;
+
+        private static bool DoubleEvenKo(Permutation perm, Player player) => ConsecutiveEvenPungs(perm, 2);
+
+        private static bool TripleEvenKo(Permutation perm, Player player) => ConsecutiveEvenPungs(perm, 3);
+
+        private static bool ConsecutiveEvenPungs(Permutation perm, int count)
+        {
+            var pungs = Kos(perm)
+                .Where(k => !IsHonor(k.Category) && k.Order % 2 == 0)
+                .ToList();
+            for (int i = 0; i < pungs.Count; i++)
+            for (int j = i + 1; j < pungs.Count; j++)
+            {
+                if (pungs[i].Category == pungs[j].Category
+                    || Math.Abs(pungs[i].Order - pungs[j].Order) != 2)
+                {
+                    continue;
+                }
+
+                if (count == 2)
+                {
+                    return true;
+                }
+
+                for (int m = j + 1; m < pungs.Count; m++)
+                {
+                    if (pungs[m].Category == pungs[i].Category
+                        || pungs[m].Category == pungs[j].Category)
+                    {
+                        continue;
+                    }
+
+                    var nums = new[] { pungs[i].Order, pungs[j].Order, pungs[m].Order };
+                    Array.Sort(nums);
+                    if (nums[1] - nums[0] == 2 && nums[2] - nums[1] == 2)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         // ---- helpers ----
