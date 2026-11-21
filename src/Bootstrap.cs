@@ -60,6 +60,8 @@ namespace ModenjoASM
                 evt => EnsureArtifact(evt?.player), priority: -100);
             Aotenjo.EventBus.Subscribe<Aotenjo.PlayerEvents.PostAddTileEvent>(
                 evt => EnsureArtifact(evt?.player), priority: -100);
+            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerEvents.PostSettlePermutationEvent>(
+                evt => SevenScoringArtifact.ApplyScore(evt?.player, evt?.permutation), priority: 10_000);
         }
 
         private static void EnsureArtifact(Aotenjo.Player? player)

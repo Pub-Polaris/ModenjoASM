@@ -14,7 +14,6 @@ namespace ModenjoASM
     public sealed class SevenScoringArtifact : Artifact
     {
         private bool _slotGranted;
-        private Action<PlayerEvents.PostSettlePermutationEvent>? _settleHandler;
 
         public SevenScoringArtifact()
             : base(Bootstrap.ArtifactId, Rarity.COMMON)
@@ -38,22 +37,10 @@ namespace ModenjoASM
                 _slotGranted = true;
                 player.ChangeArtifactLimit(1);
             }
-
-            if (_settleHandler == null)
-            {
-                _settleHandler = OnSettled;
-                EventBus.Subscribe(player, _settleHandler, priority: 10_000);
-            }
         }
 
         public override void OnRemoved(Player player)
         {
-            if (_settleHandler != null)
-            {
-                EventBus.Unsubscribe(player, _settleHandler);
-                _settleHandler = null;
-            }
-
             if (_slotGranted)
             {
                 _slotGranted = false;
@@ -63,16 +50,16 @@ namespace ModenjoASM
             base.OnRemoved(player);
         }
 
-        private static void OnSettled(PlayerEvents.PostSettlePermutationEvent evt)
+        public static void ApplyScore(Player? player, Permutation? permutation)
         {
-            if (evt?.player == null || evt.permutation == null)
+            if (player == null || permutation == null)
             {
                 return;
             }
 
-            var score = ModenjoASM.SevenYaku.SevenYakuRegistry.Evaluate(evt.permutation, evt.player);
+            var score = ModenjoASM.SevenYaku.SevenYakuRegistry.Evaluate(permutation, player);
             int points = score.Points;
-            var player = evt.player;
+            UnityEngine.Debug.Log($"[7nnkmj] settle fu={score.Fu} points={points} old={player.RoundAccumulatedScore?.GetScore()}");
 
             // Aotenjo already added RoundAccumulatedScore to CurrentAccumulatedScore;
             // replace that contribution with the 7nnkmj point-table result.
