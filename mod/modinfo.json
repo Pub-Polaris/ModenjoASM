@@ -1,0 +1,14 @@
+{
+  "modID": "7nnkmj",
+  "name": "七子麻将 / 7nnkmj",
+  "version": "0.1.0",
+  "artifactApiVersion": 2,
+  "supportedGameVersions": [
+    {
+      "minInclusive": "0.7.1.1",
+      "maxInclusive": "0.8.0.0"
+    }
+  ],
+  "author": "公民北极星_Official",
+  "description": "将七子麻将的役种与赋位计分迁移到青天井。"
+}
