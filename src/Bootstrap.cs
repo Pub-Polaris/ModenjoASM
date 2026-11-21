@@ -46,17 +46,26 @@ namespace ModenjoASM
                 () => new SevenScoringArtifact(),
                 Bootstrap.ModId);
 
-            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerRoundEvent.Start.Prepare>(EnsureArtifact, priority: -100);
+            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerRoundEvent.Start.Prepare>(
+                evt => EnsureArtifact(evt?.player), priority: -100);
+            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerRoundEvent.Start.Pre>(
+                evt => EnsureArtifact(evt?.player), priority: -100);
+            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerRoundEvent.Start.Post>(
+                evt => EnsureArtifact(evt?.player), priority: -100);
+            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerEvents.PreAddTileEvent>(
+                evt => EnsureArtifact(evt?.player), priority: -100);
+            Aotenjo.EventBus.Subscribe<Aotenjo.PlayerEvents.PostAddTileEvent>(
+                evt => EnsureArtifact(evt?.player), priority: -100);
         }
 
-        private static void EnsureArtifact(Aotenjo.PlayerRoundEvent.Start.Prepare evt)
+        private static void EnsureArtifact(Aotenjo.Player? player)
         {
-            if (evt == null || evt.player == null)
+            if (player == null)
             {
                 return;
             }
 
-            var player = evt.player;
+            UnityEngine.Debug.Log($"[7nnkmj] artifact check, held={player.GetArtifacts().Count}");
             foreach (var artifact in player.GetArtifacts())
             {
                 if (artifact != null && artifact.GetRegName() == Bootstrap.ArtifactId)
@@ -67,6 +76,7 @@ namespace ModenjoASM
 
             player.ObtainArtifact(new SevenScoringArtifact(), forced: true);
             ModenjoASM.SevenYaku.SevenYakuRegistry.GrantAll(player);
+            UnityEngine.Debug.Log("[7nnkmj] scoring artifact granted");
         }
     }
 }
